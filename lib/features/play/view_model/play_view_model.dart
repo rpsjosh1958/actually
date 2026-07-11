@@ -409,12 +409,30 @@ class PlayViewModel extends Notifier<PlayState> {
     state = state.copyWith(dragDx: dx, isDragging: true);
   }
 
-  void onDragEnd() {
+  /// [velocityDx] (logical px/s at release) lets a fast, short flick commit
+  /// the same way a slow, full-length drag does — some users, especially on
+  /// web with a mouse/trackpad, release well before the 95px distance
+  /// threshold even though the intent (and speed) was clearly a swipe. A
+  /// canceled/aborted drag (no velocity reading) just snaps back, same as
+  /// letting go short of the threshold always has.
+  void onDragEnd([double velocityDx = 0]) {
     if (!state.isDragging) return;
-    if (state.dragDx.abs() >= 95) {
-      commit(state.dragDx > 0);
+    final distancePastThreshold = state.dragDx.abs() >= 95;
+    final fastFlick = velocityDx.abs() >= 600 && state.dragDx.abs() >= 12;
+    if (distancePastThreshold || fastFlick) {
+      commit(distancePastThreshold ? state.dragDx > 0 : velocityDx > 0);
     } else {
       state = state.copyWith(dragDx: 0, isDragging: false);
     }
+  }
+
+  /// The gesture was aborted mid-drag (e.g. another recognizer won, or —
+  /// more common on web — the mouse button released outside the card's
+  /// bounds and no PanEnd ever fired). Without this, `isDragging` could get
+  /// stuck true forever with a nonzero `dragDx`, leaving the card frozen at
+  /// an angle with no way to commit or reset it.
+  void onDragCancel() {
+    if (!state.isDragging) return;
+    state = state.copyWith(dragDx: 0, isDragging: false);
   }
 }

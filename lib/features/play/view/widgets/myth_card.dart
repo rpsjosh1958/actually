@@ -34,9 +34,12 @@ class MythCard extends ConsumerWidget {
         : PlayCardMetrics.stampOpacity(math.max(0, state.dragDx));
 
     return GestureDetector(
-      onPanUpdate: (details) =>
+      behavior: HitTestBehavior.opaque,
+      onHorizontalDragUpdate: (details) =>
           vm.onDragUpdate(state.dragDx + details.delta.dx),
-      onPanEnd: (_) => vm.onDragEnd(),
+      onHorizontalDragEnd: (details) =>
+          vm.onDragEnd(details.velocity.pixelsPerSecond.dx),
+      onHorizontalDragCancel: vm.onDragCancel,
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 330, maxHeight: 440),
         child: AnimatedContainer(
