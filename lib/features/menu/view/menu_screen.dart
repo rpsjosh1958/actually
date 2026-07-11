@@ -204,6 +204,7 @@ class MenuScreen extends ConsumerWidget {
                       text: TextSpan(
                         style: textTheme.wordmark.copyWith(
                           color: colors.paperText,
+                          fontSize: 46,
                         ),
                         children: [
                           const TextSpan(text: 'ACTUALLY'),
