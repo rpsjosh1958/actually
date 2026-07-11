@@ -19,6 +19,22 @@ const cardDurationSeconds = 10;
 /// "explicitly set it to null" (needed on every reset).
 const _unset = Object();
 
+/// One resolved card, kept around so a versus match can show a post-game
+/// "review answers" breakdown of what was right/wrong.
+class AnsweredCard {
+  final MythFact fact;
+  final bool? swipedRight;
+  final bool isCorrect;
+  final bool timedOut;
+
+  const AnsweredCard({
+    required this.fact,
+    required this.swipedRight,
+    required this.isCorrect,
+    required this.timedOut,
+  });
+}
+
 class PlayState {
   final PlayMode mode;
   final List<MythFact> deck;
@@ -36,6 +52,7 @@ class PlayState {
   final int versusAnswered;
   final bool isVersusComplete;
   final int cardSecondsRemaining;
+  final List<AnsweredCard> history;
 
   const PlayState({
     required this.mode,
@@ -54,6 +71,7 @@ class PlayState {
     required this.versusAnswered,
     required this.isVersusComplete,
     required this.cardSecondsRemaining,
+    required this.history,
   });
 
   static const initial = PlayState(
@@ -73,6 +91,7 @@ class PlayState {
     versusAnswered: 0,
     isVersusComplete: false,
     cardSecondsRemaining: cardDurationSeconds,
+    history: [],
   );
 
   MythFact? get currentFact =>
@@ -95,6 +114,7 @@ class PlayState {
     int? versusAnswered,
     bool? isVersusComplete,
     int? cardSecondsRemaining,
+    List<AnsweredCard>? history,
   }) {
     return PlayState(
       mode: mode ?? this.mode,
@@ -115,6 +135,7 @@ class PlayState {
       versusAnswered: versusAnswered ?? this.versusAnswered,
       isVersusComplete: isVersusComplete ?? this.isVersusComplete,
       cardSecondsRemaining: cardSecondsRemaining ?? this.cardSecondsRemaining,
+      history: history ?? this.history,
     );
   }
 }
@@ -206,6 +227,7 @@ class PlayViewModel extends Notifier<PlayState> {
       timedOut: false,
       isGameOver: false,
       streak: 0,
+      history: const [],
     );
 
     final generation = ++_loadGeneration;
@@ -238,6 +260,7 @@ class PlayViewModel extends Notifier<PlayState> {
       isVersusComplete: false,
       versusCorrect: 0,
       versusAnswered: 0,
+      history: const [],
     );
 
     final generation = ++_loadGeneration;
@@ -321,6 +344,17 @@ class PlayViewModel extends Notifier<PlayState> {
       }
     }
 
+    final history = [
+      ...state.history,
+      if (seenFact != null)
+        AnsweredCard(
+          fact: seenFact,
+          swipedRight: swipedRight,
+          isCorrect: isCorrect,
+          timedOut: timedOut,
+        ),
+    ];
+
     state = state.copyWith(
       face: CardFace.back,
       isDragging: false,
@@ -333,6 +367,7 @@ class PlayViewModel extends Notifier<PlayState> {
       versusCorrect: versusCorrect,
       versusAnswered: versusAnswered,
       isVersusComplete: isVersusComplete,
+      history: history,
     );
 
     if (state.mode == PlayMode.versus && !isVersusComplete) {

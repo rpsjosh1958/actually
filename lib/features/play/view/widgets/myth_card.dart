@@ -280,6 +280,10 @@ class _CardBack extends StatelessWidget {
         ? "didn't swipe in time."
         : (isCorrect ? 'you called it. sharp.' : 'you got played.');
 
+    // A fast, at-a-glance correctness cue distinct from the BASED/CAP truth
+    // stamp above — that stamp reflects the fact, not whether you got it.
+    final correctGlow = isCorrect && !timedOut;
+
     return GestureDetector(
       onTap: onContinue,
       child: Container(
@@ -287,9 +291,14 @@ class _CardBack extends StatelessWidget {
         decoration: BoxDecoration(
           color: colors.inkBg,
           borderRadius: BorderRadius.circular(26),
+          border: correctGlow
+              ? Border.all(color: colors.accent.withValues(alpha: 0.65), width: 2)
+              : null,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.32),
+              color: correctGlow
+                  ? colors.accent.withValues(alpha: 0.22)
+                  : Colors.black.withValues(alpha: 0.32),
               blurRadius: 46,
               offset: const Offset(0, 22),
             ),

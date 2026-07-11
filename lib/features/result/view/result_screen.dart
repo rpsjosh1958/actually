@@ -5,6 +5,7 @@ import '../../../core/providers/auth_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/accent_button.dart';
 import '../../play/view_model/play_view_model.dart';
+import 'answer_review_screen.dart';
 
 class ResultScreen extends ConsumerWidget {
   final VoidCallback onMenu;
@@ -136,6 +137,18 @@ class ResultScreen extends ConsumerWidget {
                 onTap: () => ref
                     .read(actuallyChallengeActionsProvider.notifier)
                     .requestRematch(challenge.id, myUid),
+              ),
+              const SizedBox(height: 10),
+              AccentButton(
+                label: 'REVIEW ANSWERS',
+                variant: AccentButtonVariant.outline,
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => AnswerReviewScreen(
+                      onBack: () => Navigator.of(context).pop(),
+                    ),
+                  ),
+                ),
               ),
               const SizedBox(height: 10),
               AccentButton(

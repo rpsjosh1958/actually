@@ -130,7 +130,9 @@ class _SearchForm extends StatelessWidget {
           'swipe head-to-head against a real player',
           style: textTheme.bodyRegular.copyWith(color: colors.mutedText),
         ),
-        const SizedBox(height: 26),
+        const SizedBox(height: 18),
+        _TipsCard(colors: colors, textTheme: textTheme),
+        const SizedBox(height: 20),
         Container(
           decoration: BoxDecoration(
             color: colors.paperBg,
@@ -171,6 +173,64 @@ class _SearchForm extends StatelessWidget {
           onTap: sending ? null : onSend,
         ),
       ],
+    );
+  }
+}
+
+class _TipsCard extends StatelessWidget {
+  final AppColorsExtension colors;
+  final AppTextThemeExtension textTheme;
+
+  const _TipsCard({required this.colors, required this.textTheme});
+
+  static const _tips = [
+    "grab your friend's username and send them a match.",
+    'make sure they have the versus screen open to get the invite.',
+    "only one of you needs to send it — you don't have to do it at the same time.",
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: colors.paperBg,
+        border: Border.all(color: colors.border),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (final tip in _tips)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    margin: const EdgeInsets.only(top: 6),
+                    width: 5,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: colors.accent,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      tip,
+                      style: textTheme.bodyRegular.copyWith(
+                        fontSize: 12.5,
+                        color: colors.mutedText,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
     );
   }
 }
