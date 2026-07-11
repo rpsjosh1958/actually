@@ -39,9 +39,24 @@ class ActuallyProfileActions {
     final snap = await doc.get();
     if (snap.exists) return;
 
+    // `user.displayName` (FirebaseAuth's cached User object) is stale right
+    // after sign-up — authStateChanges() doesn't re-emit when
+    // updateDisplayName() completes, so this would read null and fall back
+    // to "Player" for every brand-new account. The shared `users/{uid}` doc
+    // is written with the real username in the same signup flow, so it's
+    // the reliable source here.
+    final sharedUserSnap = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .get();
+    final displayName =
+        sharedUserSnap.data()?['displayName'] as String? ??
+        user.displayName ??
+        'Player';
+
     await doc.set({
       'uid': user.uid,
-      'displayName': user.displayName ?? 'Player',
+      'displayName': displayName,
       'bestStreak': 0,
       'totalGamesPlayed': 0,
       'totalCorrect': 0,
