@@ -245,6 +245,8 @@ class PlayViewModel extends Notifier<PlayState> {
   ) async {
     _autoAdvanceTimer?.cancel();
     _cardTimer?.cancel();
+    _correctCount = 0;
+    _wrongCount = 0;
     _challengeId = challengeId;
     state = state.copyWith(
       mode: PlayMode.versus,
@@ -340,6 +342,19 @@ class PlayViewModel extends Notifier<PlayState> {
               correct: versusCorrect,
               answered: versusAnswered,
               completed: isVersusComplete,
+            );
+      }
+
+      // Fires exactly once, the moment *this* player finishes their own
+      // fixed deck — versus has no synchronized end point, so this can't
+      // wait for the opponent the way a solo run's single game-over can.
+      if (challengeId != null && isVersusComplete && !state.isVersusComplete) {
+        ref
+            .read(actuallyProfileActionsProvider)
+            .recordVersusMatch(
+              challengeId: challengeId,
+              correct: _correctCount,
+              wrong: _wrongCount,
             );
       }
     }

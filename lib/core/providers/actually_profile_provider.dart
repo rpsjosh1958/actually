@@ -105,24 +105,21 @@ class ActuallyProfileActions {
     });
   }
 
-  /// Records a completed club battle (Phase 2 — currently simulated, no real
-  /// opponents). Tallies lifetime correct/wrong + battle count and logs an
-  /// `actuallyMatches` doc; bestStreak is untouched (battle score is
+  /// Records this player's side of a completed real online versus match
+  /// (Phase 4) — each player finishes their own fixed deck independently, so
+  /// there's no synchronized final score to compare at this point (the
+  /// opponent may still be mid-deck), unlike the old Phase 2 simulated
+  /// battle this replaces. Tallies lifetime correct/wrong + match count and
+  /// logs an `actuallyMatches` doc; bestStreak is untouched (versus score is
   /// independent of the solo streak).
-  Future<void> recordBattle({
-    required int myScore,
-    required int oppScore,
+  Future<void> recordVersusMatch({
+    required String challengeId,
     required int correct,
     required int wrong,
   }) async {
     final user = ref.read(currentUserProvider);
     if (user == null) return;
 
-    final result = myScore > oppScore
-        ? 'win'
-        : myScore < oppScore
-        ? 'loss'
-        : 'tie';
     final doc = _doc(user.uid);
     await FirebaseFirestore.instance.runTransaction((tx) async {
       final snap = await tx.get(doc);
@@ -143,10 +140,10 @@ class ActuallyProfileActions {
 
     await FirebaseFirestore.instance.collection('actuallyMatches').add({
       'uid': user.uid,
-      'mode': 'battle',
-      'myScore': myScore,
-      'oppScore': oppScore,
-      'result': result,
+      'mode': 'versus',
+      'challengeId': challengeId,
+      'correct': correct,
+      'wrong': wrong,
       'endedAt': FieldValue.serverTimestamp(),
     });
   }
