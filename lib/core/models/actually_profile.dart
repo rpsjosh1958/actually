@@ -10,6 +10,9 @@ class ActuallyProfile {
   // cosmetic leaderboard label.
   final String displayName;
   final int bestStreak;
+  // Disney-night solo streak — kept apart from [bestStreak] so it feeds its
+  // own leaderboard and never touches the main one.
+  final int disneyBestStreak;
   final int totalGamesPlayed;
   final int totalCorrect;
   final int totalWrong;
@@ -19,6 +22,7 @@ class ActuallyProfile {
     required this.uid,
     required this.displayName,
     required this.bestStreak,
+    this.disneyBestStreak = 0,
     required this.totalGamesPlayed,
     required this.totalCorrect,
     required this.totalWrong,
@@ -31,6 +35,7 @@ class ActuallyProfile {
       uid: doc.id,
       displayName: d['displayName'] as String? ?? 'Player',
       bestStreak: d['bestStreak'] as int? ?? 0,
+      disneyBestStreak: d['disneyBestStreak'] as int? ?? 0,
       totalGamesPlayed: d['totalGamesPlayed'] as int? ?? 0,
       totalCorrect: d['totalCorrect'] as int? ?? 0,
       totalWrong: d['totalWrong'] as int? ?? 0,

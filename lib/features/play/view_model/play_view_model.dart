@@ -37,6 +37,8 @@ class AnsweredCard {
 
 class PlayState {
   final PlayMode mode;
+  // Disney-night solo run: its own bundled deck, theme and leaderboard.
+  final bool isDisney;
   final List<MythFact> deck;
   final bool isDeckLoading;
   final int factIndex;
@@ -56,6 +58,7 @@ class PlayState {
 
   const PlayState({
     required this.mode,
+    this.isDisney = false,
     required this.deck,
     required this.isDeckLoading,
     required this.factIndex,
@@ -99,6 +102,7 @@ class PlayState {
 
   PlayState copyWith({
     PlayMode? mode,
+    bool? isDisney,
     List<MythFact>? deck,
     bool? isDeckLoading,
     int? factIndex,
@@ -118,6 +122,7 @@ class PlayState {
   }) {
     return PlayState(
       mode: mode ?? this.mode,
+      isDisney: isDisney ?? this.isDisney,
       deck: deck ?? this.deck,
       isDeckLoading: isDeckLoading ?? this.isDeckLoading,
       factIndex: factIndex ?? this.factIndex,
@@ -206,7 +211,9 @@ class PlayViewModel extends Notifier<PlayState> {
     });
   }
 
-  Future<void> startSolo() async {
+  /// [disney] plays the full bundled Disney deck every run — no seen-fact
+  /// filtering, so every player faces the same pool on its leaderboard.
+  Future<void> startSolo({bool disney = false}) async {
     _autoAdvanceTimer?.cancel();
     _cardTimer?.cancel();
     _correctCount = 0;
@@ -216,6 +223,7 @@ class PlayViewModel extends Notifier<PlayState> {
     // shows a card until its real, freshly-filtered deck is ready.
     state = state.copyWith(
       mode: PlayMode.solo,
+      isDisney: disney,
       deck: const [],
       isDeckLoading: true,
       factIndex: 0,
@@ -231,7 +239,9 @@ class PlayViewModel extends Notifier<PlayState> {
     );
 
     final generation = ++_loadGeneration;
-    final facts = await _loadDeckExcludingSeen();
+    final facts = disney
+        ? await ref.read(factRepositoryProvider).loadDisney()
+        : await _loadDeckExcludingSeen();
     if (generation != _loadGeneration) return;
     state = state.copyWith(deck: _shuffled(facts), isDeckLoading: false);
     _startCardTimer();
@@ -250,6 +260,7 @@ class PlayViewModel extends Notifier<PlayState> {
     _challengeId = challengeId;
     state = state.copyWith(
       mode: PlayMode.versus,
+      isDisney: false,
       deck: const [],
       isDeckLoading: true,
       factIndex: 0,
@@ -297,7 +308,7 @@ class PlayViewModel extends Notifier<PlayState> {
     _cardTimer?.cancel();
 
     final seenFact = state.currentFact;
-    if (seenFact != null) {
+    if (seenFact != null && !state.isDisney) {
       ref.read(actuallyProfileActionsProvider).markFactSeen(seenFact.id);
     }
 
@@ -324,6 +335,7 @@ class PlayViewModel extends Notifier<PlayState> {
               finalStreak: streak,
               correct: _correctCount,
               wrong: _wrongCount,
+              disney: state.isDisney,
             );
       }
     } else {

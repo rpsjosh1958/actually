@@ -73,6 +73,9 @@ flutter:
   #   - images/a_dot_ham.jpeg
   assets:
     - assets/ACTUALLY LOGO.png
+    - assets/disney_facts.json
+    - assets/Disney_wordmark.svg
+    - assets/DIS.svg
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

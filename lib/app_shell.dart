@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/models/actually_challenge.dart';
 import 'core/providers/actually_challenge_provider.dart';
+import 'core/theme/app_theme.dart';
+import 'features/disney/view/disney_home_screen.dart';
 import 'features/gameover/view/gameover_screen.dart';
 import 'features/leaderboard/view/leaderboard_screen.dart';
 import 'features/menu/view/menu_screen.dart';
@@ -11,7 +13,17 @@ import 'features/prematch/view/find_opponent_screen.dart';
 import 'features/prematch/view/prematch_screen.dart';
 import 'features/result/view/result_screen.dart';
 
-enum AppScreen { menu, play, over, findOpponent, prematch, result, board }
+enum AppScreen {
+  menu,
+  play,
+  over,
+  findOpponent,
+  prematch,
+  result,
+  board,
+  disney,
+  disneyBoard,
+}
 
 final appShellProvider = NotifierProvider<AppShellViewModel, AppScreen>(
   AppShellViewModel.new,
@@ -57,6 +69,11 @@ class AppShell extends ConsumerWidget {
     final shell = ref.read(appShellProvider.notifier);
     final playVm = ref.read(playViewModelProvider.notifier);
     final playMode = ref.watch(playViewModelProvider.select((s) => s.mode));
+    final isDisneyRun = ref.watch(
+      playViewModelProvider.select((s) => s.isDisney),
+    );
+    // Leaving a Disney run lands back on the Disney home, not the main menu.
+    final home = isDisneyRun ? AppScreen.disney : AppScreen.menu;
 
     void goToChallengeScreen(ActuallyChallenge? c) {
       final target = _screenForChallengeStatus(c?.status);
@@ -80,7 +97,7 @@ class AppShell extends ConsumerWidget {
       });
     }
 
-    return switch (screen) {
+    final child = switch (screen) {
       AppScreen.menu => MenuScreen(
         onStartSolo: () {
           playVm.startSolo();
@@ -90,14 +107,15 @@ class AppShell extends ConsumerWidget {
           ref.read(activeActuallyChallengeProvider).asData?.value,
         ),
         onLeaderboard: () => shell.go(AppScreen.board),
+        onDisney: () => shell.go(AppScreen.disney),
       ),
       AppScreen.play => PlayScreen(
-        onExitToMenu: () => shell.go(AppScreen.menu),
+        onExitToMenu: () => shell.go(home),
         onGameOver: () => shell.go(AppScreen.over),
       ),
       AppScreen.over => GameOverScreen(
         onRunItBack: () => shell.go(AppScreen.play),
-        onMenu: () => shell.go(AppScreen.menu),
+        onMenu: () => shell.go(home),
       ),
       AppScreen.findOpponent => FindOpponentScreen(
         onBack: () => shell.go(AppScreen.menu),
@@ -109,6 +127,28 @@ class AppShell extends ConsumerWidget {
       AppScreen.board => LeaderboardScreen(
         onBack: () => shell.go(AppScreen.menu),
       ),
+      AppScreen.disney => DisneyHomeScreen(
+        onPlay: () {
+          playVm.startSolo(disney: true);
+          shell.go(AppScreen.play);
+        },
+        onLeaderboard: () => shell.go(AppScreen.disneyBoard),
+        onBack: () => shell.go(AppScreen.menu),
+      ),
+      AppScreen.disneyBoard => LeaderboardScreen(
+        title: 'DISNEY STREAKS',
+        field: 'disneyBestStreak',
+        onBack: () => shell.go(AppScreen.disney),
+      ),
     };
+
+    final disneyThemed =
+        screen == AppScreen.disney ||
+        screen == AppScreen.disneyBoard ||
+        ((screen == AppScreen.play || screen == AppScreen.over) &&
+            isDisneyRun);
+    return disneyThemed
+        ? Theme(data: AppThemeNotifier.disney, child: child)
+        : child;
   }
 }

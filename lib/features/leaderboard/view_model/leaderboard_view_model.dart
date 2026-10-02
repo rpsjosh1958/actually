@@ -36,8 +36,13 @@ class LeaderboardPage {
   }
 }
 
-final leaderboardProvider =
-    AsyncNotifierProvider<LeaderboardViewModel, LeaderboardPage>(
+/// Keyed by the `actuallyProfiles` field to rank by — `bestStreak` for the
+/// main board, `disneyBestStreak` for Disney night. Firestore's orderBy skips
+/// docs missing that field, so only players who've played Disney appear on
+/// its board. autoDispose so every visit refetches instead of showing the
+/// first load of the session forever.
+final leaderboardProvider = AsyncNotifierProvider.autoDispose
+    .family<LeaderboardViewModel, LeaderboardPage, String>(
       LeaderboardViewModel.new,
     );
 
@@ -48,6 +53,9 @@ final leaderboardProvider =
 /// "load more" — reasonable for a leaderboard, which doesn't need
 /// per-second reactivity the way an in-match score does.
 class LeaderboardViewModel extends AsyncNotifier<LeaderboardPage> {
+  LeaderboardViewModel(this.field);
+  final String field;
+
   @override
   Future<LeaderboardPage> build() => _fetchPage();
 
@@ -55,7 +63,7 @@ class LeaderboardViewModel extends AsyncNotifier<LeaderboardPage> {
     final currentUid = ref.read(currentUserProvider)?.uid;
     var query = FirebaseFirestore.instance
         .collection('actuallyProfiles')
-        .orderBy('bestStreak', descending: true)
+        .orderBy(field, descending: true)
         .limit(_pageSize);
     if (startAfter != null) query = query.startAfterDocument(startAfter);
 
@@ -81,6 +89,9 @@ class LeaderboardViewModel extends AsyncNotifier<LeaderboardPage> {
   }
 
   LeaderboardEntry _toEntry(ActuallyProfile p, int rank, String? currentUid) {
+    final score = field == 'disneyBestStreak'
+        ? p.disneyBestStreak
+        : p.bestStreak;
     return LeaderboardEntry(
       rank: rank,
       uid: p.uid,
@@ -88,7 +99,7 @@ class LeaderboardViewModel extends AsyncNotifier<LeaderboardPage> {
       // the uid, same default SORTA-APP's signup writes.
       avatarSeed: p.uid,
       displayName: p.uid == currentUid ? "YOU (that's you)" : p.displayName,
-      score: p.bestStreak,
+      score: score,
       isCurrentUser: p.uid == currentUid,
     );
   }
@@ -99,8 +110,11 @@ class LeaderboardViewModel extends AsyncNotifier<LeaderboardPage> {
 
     state = AsyncData(current.copyWith(isLoadingMore: true));
     try {
-      state = AsyncData(await _fetchPage(startAfter: current.lastDoc));
+      final page = await _fetchPage(startAfter: current.lastDoc);
+      if (!ref.mounted) return;
+      state = AsyncData(page);
     } catch (_) {
+      if (!ref.mounted) return;
       // Keep whatever loaded so far visible; just stop spinning so the
       // player can retry rather than getting stuck on a dead spinner.
       state = AsyncData(current.copyWith(isLoadingMore: false));

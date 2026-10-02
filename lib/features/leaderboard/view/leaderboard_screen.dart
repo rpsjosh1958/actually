@@ -7,14 +7,23 @@ import '../view_model/leaderboard_view_model.dart';
 
 class LeaderboardScreen extends ConsumerWidget {
   final VoidCallback onBack;
+  final String title;
 
-  const LeaderboardScreen({super.key, required this.onBack});
+  /// `actuallyProfiles` field to rank by — see [leaderboardProvider].
+  final String field;
+
+  const LeaderboardScreen({
+    super.key,
+    required this.onBack,
+    this.title = 'GLOBAL STREAKS',
+    this.field = 'bestStreak',
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = Theme.of(context).appColors;
     final textTheme = Theme.of(context).appTextTheme;
-    final pageAsync = ref.watch(leaderboardProvider);
+    final pageAsync = ref.watch(leaderboardProvider(field));
 
     return Scaffold(
       backgroundColor: colors.background,
@@ -38,7 +47,7 @@ class LeaderboardScreen extends ConsumerWidget {
                   ),
                   const SizedBox(width: 12),
                   Text(
-                    'GLOBAL STREAKS',
+                    title,
                     style: textTheme.headline.copyWith(
                       fontSize: 24,
                       color: colors.paperText,
@@ -64,7 +73,7 @@ class LeaderboardScreen extends ConsumerWidget {
                               onTap: page.isLoadingMore
                                   ? null
                                   : () => ref
-                                        .read(leaderboardProvider.notifier)
+                                        .read(leaderboardProvider(field).notifier)
                                         .loadMore(),
                             ),
                           ),

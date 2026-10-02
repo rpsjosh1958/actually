@@ -1,13 +1,34 @@
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/myth_fact.dart';
 
 final factRepositoryProvider = Provider((ref) => FactRepository());
 
 class FactRepository {
+  /// The Disney-night deck ships inside the app (assets/disney_facts.json)
+  /// rather than Firestore — editing it means a rebuild, but needs no admin
+  /// access or rules change.
+  Future<List<MythFact>> loadDisney() async {
+    final raw =
+        jsonDecode(await rootBundle.loadString('assets/disney_facts.json'))
+            as List;
+    return [
+      for (final f in raw)
+        MythFact(
+          id: f['id'] as String,
+          statement: f['statement'] as String,
+          isTrue: f['isTrue'] as bool,
+          why: f['why'] as String,
+          category: 'disney',
+        ),
+    ];
+  }
+
   /// The `actuallyFacts` collection is the single source of truth — no local
   /// fallback. Returns an empty list on error (offline, rules not deployed,
   /// etc.) so callers can show a real "couldn't load" state instead of

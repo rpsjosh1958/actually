@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/actually_profile.dart';
 import 'auth_provider.dart';
+import 'user_provider.dart';
 
 final actuallyProfileProvider = StreamProvider<ActuallyProfile?>((ref) {
   final user = ref.watch(currentUserProvider);
@@ -68,14 +69,22 @@ class ActuallyProfileActions {
   }
 
   /// Records a completed solo run: bumps bestStreak if it's a new PB, tallies
-  /// lifetime correct/wrong, and logs an `actuallyMatches` doc.
+  /// lifetime correct/wrong, and logs an `actuallyMatches` doc. A [disney]
+  /// run only bumps `disneyBestStreak` — main stats and leaderboard stay
+  /// untouched.
   Future<void> recordSoloRun({
     required int finalStreak,
     required int correct,
     required int wrong,
+    bool disney = false,
   }) async {
     final user = ref.read(currentUserProvider);
     if (user == null) return;
+
+    // The shared users/{uid} doc carries the real username even in a
+    // brand-new account's first session, when user.displayName is still
+    // stale-null (see bootstrapIfNeeded).
+    final username = ref.read(userProfileProvider).asData?.value?.displayName;
 
     final doc = _doc(user.uid);
     await FirebaseFirestore.instance.runTransaction((tx) async {
@@ -85,21 +94,27 @@ class ActuallyProfileActions {
           : ActuallyProfile.empty(user.uid);
       tx.set(doc, {
         'uid': user.uid,
-        'displayName': user.displayName ?? current.displayName,
-        'bestStreak': finalStreak > current.bestStreak
-            ? finalStreak
-            : current.bestStreak,
-        'totalGamesPlayed': current.totalGamesPlayed + 1,
-        'totalCorrect': current.totalCorrect + correct,
-        'totalWrong': current.totalWrong + wrong,
-        'totalBattlesPlayed': current.totalBattlesPlayed,
+        'displayName': username ?? user.displayName ?? current.displayName,
+        if (disney)
+          'disneyBestStreak': finalStreak > current.disneyBestStreak
+              ? finalStreak
+              : current.disneyBestStreak,
+        if (!disney) ...{
+          'bestStreak': finalStreak > current.bestStreak
+              ? finalStreak
+              : current.bestStreak,
+          'totalGamesPlayed': current.totalGamesPlayed + 1,
+          'totalCorrect': current.totalCorrect + correct,
+          'totalWrong': current.totalWrong + wrong,
+          'totalBattlesPlayed': current.totalBattlesPlayed,
+        },
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
     });
 
     await FirebaseFirestore.instance.collection('actuallyMatches').add({
       'uid': user.uid,
-      'mode': 'solo',
+      'mode': disney ? 'disney' : 'solo',
       'finalStreak': finalStreak,
       'endedAt': FieldValue.serverTimestamp(),
     });

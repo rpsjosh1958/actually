@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../../core/models/actually_fact_submission.dart';
 import '../../../core/providers/actually_fact_submission_provider.dart';
 import '../../../core/providers/actually_profile_provider.dart';
 import '../../../core/providers/user_provider.dart';
+import '../../../core/theme/app_palette.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/navii_avatar_view.dart';
 import '../../auth/view_model/auth_view_model.dart';
@@ -16,12 +18,14 @@ class MenuScreen extends ConsumerWidget {
   final VoidCallback onStartSolo;
   final VoidCallback onVersus;
   final VoidCallback onLeaderboard;
+  final VoidCallback onDisney;
 
   const MenuScreen({
     super.key,
     required this.onStartSolo,
     required this.onVersus,
     required this.onLeaderboard,
+    required this.onDisney,
   });
 
   @override
@@ -257,6 +261,28 @@ class MenuScreen extends ConsumerWidget {
               ),
               Column(
                 children: [
+                  // Previews the Disney theme's own colours so it reads as
+                  // a different world before you tap in.
+                  _MenuCard(
+                    onTap: onDisney,
+                    background: AppPalette.disneyInkBg,
+                    title: 'DISNEY TRIVIA',
+                    subtitle: 'try the disney night theme',
+                    titleColor: AppPalette.inkText,
+                    subtitleColor: Colors.white70,
+                    // DIS.svg colours itself via a <style> block flutter_svg
+                    // ignores, so tint it here.
+                    trailing: SvgPicture.asset(
+                      'assets/DIS.svg',
+                      height: 30,
+                      colorFilter: const ColorFilter.mode(
+                        AppPalette.disneyAccent,
+                        BlendMode.srcIn,
+                      ),
+                    ),
+                    textTheme: textTheme,
+                  ),
+                  const SizedBox(height: 12),
                   _MenuCard(
                     onTap: onStartSolo,
                     background: colors.accent,

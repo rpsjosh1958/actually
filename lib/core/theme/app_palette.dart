@@ -20,4 +20,15 @@ class AppPalette {
   ];
 
   static const danger = Color(0xFFFF3B30);
+
+  // Disney night — a light storybook palette (navy, royal blue, gold). Kept
+  // light on purpose: paperText doubles as text-on-background, so a dark
+  // background would hide every header.
+  static const disneyBackground = Color(0xFFF1EDFB);
+  static const disneyPaperText = Color(0xFF141B4D);
+  static const disneyInkBg = Color(0xFF23308C);
+  static const disneyAccent = Color(0xFFF4BE3C);
+  static const disneyBorder = Color(0xFFDCD6EF);
+  static const disneyMutedText = Color(0xFF5E6390);
+  static const disneyFaintText = Color(0xFF8F93B8);
 }

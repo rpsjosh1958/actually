@@ -169,7 +169,7 @@ class PlayScreen extends ConsumerWidget {
                                     challenge.factIds,
                                   );
                                 } else {
-                                  vm.startSolo();
+                                  vm.startSolo(disney: state.isDisney);
                                 }
                               },
                             )

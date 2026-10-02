@@ -22,8 +22,9 @@ class GameOverScreen extends ConsumerWidget {
     final state = ref.watch(playViewModelProvider);
     final vm = ref.read(playViewModelProvider.notifier);
     final fact = state.currentFact;
+    final profile = ref.watch(actuallyProfileProvider).asData?.value;
     final best =
-        ref.watch(actuallyProfileProvider).asData?.value?.bestStreak ??
+        (state.isDisney ? profile?.disneyBestStreak : profile?.bestStreak) ??
         state.streak;
 
     final verdictWord = fact == null ? '' : (fact.isTrue ? 'BASED.' : 'CAP.');
@@ -142,7 +143,9 @@ class GameOverScreen extends ConsumerWidget {
                   const SizedBox(width: 9),
                   Expanded(
                     child: Text(
-                      "streak synced to the global leaderboard",
+                      state.isDisney
+                          ? 'streak synced to the disney leaderboard'
+                          : 'streak synced to the global leaderboard',
                       style: textTheme.bodyRegular.copyWith(
                         fontSize: 12.5,
                         color: colors.mutedText,
@@ -160,7 +163,7 @@ class GameOverScreen extends ConsumerWidget {
                       variant: AccentButtonVariant.ink,
                       fontSize: 13,
                       onTap: () {
-                        vm.startSolo();
+                        vm.startSolo(disney: state.isDisney);
                         onRunItBack();
                       },
                     ),
